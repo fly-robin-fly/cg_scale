@@ -1,6 +1,5 @@
 #include "HX711.h"
 #include <LiquidCrystal_I2C.h>
-#include <Arduino.h>
 
 #define HX711_SCK_PIN 4
 #define HX711_F_DOUT 3
@@ -11,7 +10,7 @@
 
 HX711 frontScale;
 HX711 rearScale;
-LiquidCrystal_I2C lcd(0x27, 20, 4);
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 float lastTotalWeight = -999.0f;
 float lastCG = -999.0f;
@@ -22,27 +21,29 @@ void setup() {
   lcd.init();
   lcd.backlight();
 
-  frontScale.begin(HX711_F_DOUT, HX711_SCK_PIN);
-  rearScale.begin(HX711_R_DOUT, HX711_SCK_PIN);
-
   lcd.setCursor(0, 0);
   lcd.print("Initializing");
   lcd.setCursor(0, 1);
   lcd.print("scales ...");
   Serial.println("Initializing scales ...");
 
+  frontScale.begin(HX711_F_DOUT, HX711_SCK_PIN);
+  rearScale.begin(HX711_R_DOUT, HX711_SCK_PIN);
+
+  delay(1000);
   while (!frontScale.is_ready() || !rearScale.is_ready()) {
     delay(100);
   }
-
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Scales Ready!");
 
   frontScale.tare(20);
   rearScale.tare(20);
   frontScale.set_scale(420.52f);
   rearScale.set_scale(420.52f);
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Scales Ready!");
+
   delay(1000);
   lcd.clear();
 }
