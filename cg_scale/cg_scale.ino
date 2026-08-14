@@ -1,19 +1,20 @@
 #include "HX711.h"
 #include <LiquidCrystal_I2C.h>
+#include <Arduino.h>
 
 #define HX711_SCK_PIN 4
 #define HX711_F_DOUT 3
 #define HX711_R_DOUT 2
 
-#define D_LEADING_EDGE 35
-#define D_BETWEEN 137
-
+#define D_LEADING_EDGE 35.0f
+#define D_BETWEEN 137.0f
 
 HX711 frontScale;
 HX711 rearScale;
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
-
+float lastTotalWeight = -999.0f;
+float lastCG = -999.0f;
 
 void setup() {
   Serial.begin(115200);
@@ -22,29 +23,62 @@ void setup() {
 
   frontScale.begin(HX711_F_DOUT, HX711_SCK_PIN);
   rearScale.begin(HX711_R_DOUT, HX711_SCK_PIN);
+
+  lcd.setCursor(0, 0);
+  lcd.print("Waiting for scales..");
+  while (!frontScale.is_ready() || !rearScale.is_ready()) {
+    delay(100);
+  }
+
+  lcd.setCursor(0, 0);
+  lcd.print("Scales Ready!");
+
   frontScale.tare(20);
   rearScale.tare(20);
-  frontScale.set_scale(420.52);
-  rearScale.set_scale(420.52);
-
-  while (!frontScale.is_ready() || !rearScale.is_ready()) {
-    lcd.setCursor(0, 0);
-    lcd.print("Waiting for scales to be ready ...");
-  }
+  frontScale.set_scale(420.52f);
+  rearScale.set_scale(420.52f);
+  delay(1000);
+  lcd.clear();
 }
 
 void loop() {
-  float frontWeight = frontScale.get_units(5);  // Average of 5 readings
+  float frontWeight = frontScale.get_units(5);
   float rearWeight = rearScale.get_units(5);
   float totalWeight = frontWeight + rearWeight;
-  float cg = D_LEADING_EDGE + (D_BETWEEN * (rearWeight / totalWeight));
-  lcd.setCursor(0, 0);
-  lcd.print("Weight: ");
-  lcd.print(totalWeight);
-  lcd.print("g");
-  lcd.setCursor(0, 1);
-  lcd.print("CG: ");
-  lcd.print(cg);
-  lcd.print("mm");
+
+  bool isValidWeight = (totalWeight > 2.0f);
+  bool wasValidWeight = (lastTotalWeight > 2.0f);
+
+  float cg = 0.0f;
+  if (isValidWeight) {
+    cg = D_LEADING_EDGE + (D_BETWEEN * (rearWeight / totalWeight));
+  } else {
+    lastCG = 0.0f; 
+  }
+
+  if (fabs(totalWeight - lastTotalWeight) > 1.0f || 
+      fabs(cg - lastCG) > 0.5f || 
+      isValidWeight != wasValidWeight) {
+
+    lcd.clear();
+
+    lcd.setCursor(0, 0);
+    lcd.print("Weight: ");
+    lcd.print(totalWeight, 0);
+    lcd.print(" g");
+
+    lcd.setCursor(0, 1);
+    lcd.print("CG:     ");
+    if (isValidWeight) {
+      lcd.print(cg, 1);
+      lcd.print(" mm");
+    } else {
+      lcd.print("N/A");
+    }
+
+    lastTotalWeight = totalWeight;
+    lastCG = cg;
+  }
+
   delay(100);
 }
