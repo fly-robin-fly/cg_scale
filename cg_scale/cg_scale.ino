@@ -18,6 +18,7 @@ float lastCG = -999.0f;
 
 void setup() {
   Serial.begin(115200);
+  Serial.println("Hello pilots! :)");
   lcd.init();
   lcd.backlight();
 
@@ -25,11 +26,16 @@ void setup() {
   rearScale.begin(HX711_R_DOUT, HX711_SCK_PIN);
 
   lcd.setCursor(0, 0);
-  lcd.print("Waiting for scales..");
+  lcd.print("Initializing");
+  lcd.setCursor(0, 1);
+  lcd.print("scales ...");
+  Serial.println("Initializing scales ...");
+
   while (!frontScale.is_ready() || !rearScale.is_ready()) {
     delay(100);
   }
 
+  lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("Scales Ready!");
 
@@ -53,12 +59,10 @@ void loop() {
   if (isValidWeight) {
     cg = D_LEADING_EDGE + (D_BETWEEN * (rearWeight / totalWeight));
   } else {
-    lastCG = 0.0f; 
+    lastCG = 0.0f;
   }
 
-  if (fabs(totalWeight - lastTotalWeight) > 1.0f || 
-      fabs(cg - lastCG) > 0.5f || 
-      isValidWeight != wasValidWeight) {
+  if (fabs(totalWeight - lastTotalWeight) > 1.0f || fabs(cg - lastCG) > 0.5f || isValidWeight != wasValidWeight) {
 
     lcd.clear();
 
