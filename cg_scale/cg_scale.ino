@@ -36,14 +36,16 @@ void setup() {
     delay(100);
   }
 
-  frontScale.set_offset(-35148); 
+  frontScale.tare(20);
   frontScale.set_scale(433.087799);
-  rearScale.set_offset(137514); 
+  rearScale.tare(20);
   rearScale.set_scale(437.865936);
 
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Scales Ready!");
+  lcd.print("Scales are");
+  lcd.setCursor(0, 1);
+  lcd.print("ready!");
 
   delay(1000);
   lcd.clear();
