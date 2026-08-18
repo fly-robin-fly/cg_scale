@@ -1,8 +1,9 @@
 #include "HX711.h"
 #include <LiquidCrystal_I2C.h>
 
-#define HX711_SCK_PIN 4
-#define HX711_F_DOUT 3
+#define HX711_F_SCK_PIN 5
+#define HX711_R_SCK_PIN 3
+#define HX711_F_DOUT 4
 #define HX711_R_DOUT 2
 
 #define D_LEADING_EDGE 35.0f
@@ -27,18 +28,18 @@ void setup() {
   lcd.print("scales ...");
   Serial.println("Initializing scales ...");
 
-  frontScale.begin(HX711_F_DOUT, HX711_SCK_PIN);
-  rearScale.begin(HX711_R_DOUT, HX711_SCK_PIN);
+  frontScale.begin(HX711_F_DOUT, HX711_F_SCK_PIN);
+  rearScale.begin(HX711_R_DOUT, HX711_R_SCK_PIN);
 
   delay(1000);
   while (!frontScale.is_ready() || !rearScale.is_ready()) {
     delay(100);
   }
 
-  frontScale.tare(20);
-  rearScale.tare(20);
-  frontScale.set_scale(420.52f);
-  rearScale.set_scale(420.52f);
+  frontScale.set_offset(-35148); 
+  frontScale.set_scale(433.087799);
+  rearScale.set_offset(137514); 
+  rearScale.set_scale(437.865936);
 
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -51,6 +52,11 @@ void setup() {
 void loop() {
   float frontWeight = frontScale.get_units(5);
   float rearWeight = rearScale.get_units(5);
+  Serial.print("Front scale: ");
+  Serial.print(frontWeight);
+  Serial.print("g | Rear scale: ");
+  Serial.print(rearWeight);
+  Serial.println("g");
   float totalWeight = frontWeight + rearWeight;
 
   bool isValidWeight = (totalWeight > 2.0f);
@@ -84,6 +90,4 @@ void loop() {
     lastTotalWeight = totalWeight;
     lastCG = cg;
   }
-
-  delay(100);
 }
